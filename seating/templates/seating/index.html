@@ -1,0 +1,63 @@
+{% extends "seating/base.html" %}
+{% block content %}
+<main>
+<p class="hint">اضغط على أي طاولة لإضافة أسماء المدعوين. <span class="legend"><span><i style="background:#10b981"></i>طاولة بها أسماء</span><span>الرقم الأخضر = عدد المسجلين</span></span></p>
+<div class="plan" id="plan"></div>
+</main>
+<div id="banner" style="display:none;background:#fee2e2;color:#991b1b;padding:12px 16px;text-align:center">تعذّر الاتصال بالخادم.</div>
+<div class="modal" id="modal"><div class="box">
+ <div style="display:flex;justify-content:space-between;align-items:start"><h2 id="mt"></h2><button type="button" class="gray" id="x" aria-label="إغلاق">✕</button></div>
+ <div class="sub" id="ms"></div>
+ <div class="row"><input type="text" id="nm" placeholder="اسم المدعو" autocomplete="off"><button type="button" id="add">إضافة</button></div>
+ <div id="msg" style="min-height:20px;margin-top:6px;font-size:14px"></div>
+ <div class="full" id="full"></div>
+ <ul class="names" id="names"></ul>
+ <button type="button" class="gray" id="close">إغلاق</button>
+</div></div>
+{% endblock %}
+{% block script %}
+<script>
+(function(){
+  var guests={}, cur=null;
+  var $=function(id){return document.getElementById(id)};
+  var modal=$('modal'), listEl=$('names'), nmEl=$('nm'), msg=$('msg');
+  function showMsg(t,ok){msg.textContent=t||'';msg.style.color=ok?'#047857':'#b91c1c';}
+  function closeModal(){modal.classList.remove('open');}
+  function render(){drawPlan($('plan'),{onClick:openModal,guests:guests});}
+  function openModal(t){cur=t;showMsg('');refresh();modal.classList.add('open');nmEl.value='';setTimeout(function(){nmEl.focus()},50);}
+  function refresh(){
+    var a=guests[cur]||[],cap=capacityOf(cur);
+    $('mt').textContent='طاولة رقم '+cur;
+    $('ms').textContent='سعة الطاولة: '+cap+' • المسجلون: '+a.length;
+    $('full').textContent=a.length>=cap?'تنبيه: وصل العدد لسعة الطاولة (يمكنك الإضافة مع ذلك)':'';
+    listEl.innerHTML='';
+    a.forEach(function(n,i){
+      var li=document.createElement('li'),sp=document.createElement('span');sp.textContent=(i+1)+'. '+n;
+      var b=document.createElement('button');b.type='button';b.className='del';b.textContent='حذف';
+      b.addEventListener('click',function(){
+        if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='تأكيد؟';setTimeout(function(){b.dataset.sure='';b.textContent='حذف'},3000);return;}
+        api('DELETE',{table:cur,index:i}).then(function(g){guests=g;refresh();render();}).catch(function(e){showMsg(e.message)});
+      });
+      li.appendChild(sp);li.appendChild(b);listEl.appendChild(li);
+    });
+  }
+  function add(){
+    var v=nmEl.value.trim();
+    if(!v){showMsg('اكتب الاسم أولًا');nmEl.focus();return;}
+    showMsg('جارٍ الحفظ...',true);
+    api('POST',{table:cur,name:v}).then(function(g){
+      guests=g;nmEl.value='';showMsg('تمت الإضافة ✓',true);refresh();render();nmEl.focus();
+    }).catch(function(e){showMsg('تعذّر الحفظ: '+e.message)});
+  }
+  $('add').addEventListener('click',add);
+  nmEl.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();add();}});
+  $('close').addEventListener('click',closeModal);
+  $('x').addEventListener('click',closeModal);
+  modal.addEventListener('click',function(e){if(e.target===modal)closeModal();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal();});
+  api('GET').then(function(g){guests=g;render();}).catch(function(){
+    $('banner').style.display='block';
+  });
+})();
+</script>
+{% endblock %}

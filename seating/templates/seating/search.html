@@ -1,0 +1,30 @@
+{% extends "seating/base.html" %}
+{% block title %}بحث عن مدعو{% endblock %}
+{% block content %}
+<main style="max-width:700px">
+<form class="row" id="f"><input type="text" id="q" placeholder="اكتب اسم المدعو (أو جزءًا منه)..." autofocus><button>بحث</button></form>
+<ul class="results" id="res"></ul>
+</main>
+{% endblock %}
+{% block script %}
+<script>
+var guests={};
+var norm=function(s){return s.replace(/[ً-ٟـ]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').toLowerCase().trim();};
+function search(){
+  var q=norm(document.getElementById('q').value),res=document.getElementById('res');res.innerHTML='';
+  if(!q)return;
+  var words=q.split(/\s+/),n=0;
+  Object.keys(guests).forEach(function(t){guests[t].forEach(function(name){
+    var nn=norm(name);if(!words.every(function(w){return nn.indexOf(w)>-1}))return;n++;
+    var li=document.createElement('li'),d=document.createElement('div'),a=document.createElement('div');
+    a.textContent=name;a.style.fontWeight='600';
+    var b=document.createElement('div');b.className='sub';b.textContent='طاولة رقم '+t;d.append(a,b);
+    var l=document.createElement('a');l.href=CFG.viewUrl+'?table='+t+'&name='+encodeURIComponent(name);l.textContent='عرض مكان الطاولة';
+    li.append(d,l);res.appendChild(li);});});
+  if(!n){res.innerHTML='<li>لا توجد نتائج</li>';}
+}
+document.getElementById('f').onsubmit=function(e){e.preventDefault();search();};
+document.getElementById('q').oninput=search;
+api('GET').then(function(g){guests=g;});
+</script>
+{% endblock %}

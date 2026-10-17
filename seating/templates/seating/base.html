@@ -1,0 +1,15 @@
+{% load static %}<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}توزيع المدعوين{% endblock %}</title>
+<link rel="stylesheet" href="{% static 'seating/style.css' %}"></head><body>
+<header><h1>🏛️ توزيع المدعوين — Kempinski</h1>
+<a href="{% url 'index' %}" {% if active == 'index' %}class="on"{% endif %}>تسجيل الأسماء</a>
+<a href="{% url 'search' %}" {% if active == 'search' %}class="on"{% endif %}>بحث عن مدعو</a></header>
+{% block content %}{% endblock %}
+<script>
+window.CFG={planUrl:"{% static 'seating/plan.png' %}",api:"{% url 'guests' %}",csrf:"{{ csrf_token }}",
+  searchUrl:"{% url 'search' %}",viewUrl:"{% url 'view' %}"};
+</script>
+<script src="{% static 'seating/common.js' %}"></script>
+{% block script %}{% endblock %}
+</body></html>

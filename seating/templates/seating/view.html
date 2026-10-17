@@ -1,0 +1,19 @@
+{% extends "seating/base.html" %}
+{% block title %}مكان الطاولة{% endblock %}
+{% block content %}
+<main>
+<p><a href="{% url 'search' %}" style="color:#2563eb">← رجوع للبحث</a></p>
+<div class="big" id="t"></div><div class="sub" id="s"></div>
+<div class="plan" id="plan"></div>
+</main>
+{% endblock %}
+{% block script %}
+<script>
+var p=new URLSearchParams(location.search),t=+p.get('table'),name=p.get('name')||'';
+document.getElementById('t').textContent=(name?name+' — ':'')+'طاولة رقم '+t;
+api('GET').then(function(g){
+  document.getElementById('s').textContent='على نفس الطاولة: '+((g[t]||[]).join('، ')||'—');
+  drawPlan(document.getElementById('plan'),{highlight:t});
+});
+</script>
+{% endblock %}
